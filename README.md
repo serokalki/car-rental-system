@@ -26,8 +26,9 @@ Web-based rental management for a car rental business: bookings, availability ca
 
 ## Your live project (already created)
 - Supabase project: **car-rental-system** · region **Sydney** · ref `kznbodwcxcyaxwlfbuih`
-- Database schema, security rules and live sync are **installed**; `config.js` is **already filled in**.
-- Remaining steps: **1.3** (turn *Confirm email* off), **3** (GitHub Pages) and **4** (first sign-in).
+- Database schema, security rules, live sync and email-free accounts are **installed**; `config.js` is **already filled in**.
+- Staff accounts are created inside the database: **no emails are sent, no email settings to change**.
+- Remaining steps: **3** (GitHub Pages) and **4** (first sign-in).
 - Dashboard: https://supabase.com/dashboard/project/kznbodwcxcyaxwlfbuih
 
 ## Setup — about 20 minutes (for a new project)
@@ -36,12 +37,10 @@ Web-based rental management for a car rental business: bookings, availability ca
 1. Sign up at **supabase.com** → **New project**.
    - Region: **Sydney** (closest to Vanuatu).
    - Save the database password somewhere safe.
-2. **SQL Editor → New query** → paste all of `supabase/schema.sql` → **Run**.
-   - Expect "Success". It is safe to run again.
-3. **Authentication → Sign In / Providers → Email**:
-   - **Enable Email provider**: ON
-   - **Confirm email**: **OFF** (staff accounts are created by your administrator, not by email links)
-   - **Allow new users to sign up**: ON (needed for the administrator to create staff accounts)
+2. **SQL Editor → New query** → paste all of `supabase/schema.sql` → **Run**; then do the same with `supabase/accounts.sql`.
+   - Expect "Success". Both are safe to run again.
+3. **Authentication → Sign In / Providers → Email**: keep **Enable Email provider** ON.
+   - Optional hardening: turn **Allow new users to sign up** OFF — the app creates accounts inside the database, so public sign-up is not needed.
 4. **Project Settings → API** → copy:
    - **Project URL**
    - **anon public** key
@@ -53,7 +52,7 @@ Edit `config.js`:
 window.CRMS_CONFIG = {
   supabaseUrl: 'https://YOUR-PROJECT.supabase.co',
   supabaseAnonKey: 'YOUR-ANON-PUBLIC-KEY',
-  loginDomain: 'example.com'   // or your own domain, e.g. 'islandcarrentals.vu'
+  loginDomain: 'saalscarrentals.vu'   // internal only, never emailed
 };
 ```
 - Usernames are stored internally as `username@loginDomain`. No email is ever sent.
@@ -116,8 +115,7 @@ window.CRMS_CONFIG = {
 | Problem | Fix |
 |---|---|
 | "Cannot reach the shared database" | Check internet; check URL and anon key in `config.js` |
-| Setup form says sign-in failed | Turn **Confirm email** OFF in Supabase (step 1.3) |
-| New user created but cannot sign in | Same — **Confirm email** must be OFF |
-| "Email address is invalid" when creating users | Set `loginDomain` to a real domain you own |
+| "Email rate limit exceeded" / "Email address is invalid" | You are running an old copy — use this package (`accounts.sql` installed, `loginDomain` not `example.com`) |
+| "Could not find the function crms_setup_admin" | Run `supabase/accounts.sql` in the SQL Editor |
 | Everyone sees nothing after sign-in | Run `supabase/schema.sql` again; check the user is **Active** |
 | Site shows "Local mode" | `config.js` is empty or not uploaded |

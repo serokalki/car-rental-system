@@ -2318,12 +2318,10 @@ async function cloudLogin(f) {
   f.reset(); await startCloudSession(data.user);
 }
 async function cloudCreateUser(d) {
-  const tmp = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, {auth: {persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'crms-signup-' + Date.now()}});
-  const {data, error} = await tmp.auth.signUp({email: toEmail(d.username), password: d.password, options: {data: {name: d.name, username: d.username}}});
+  // Created inside the database: no emails, no rate limits, no confirmation step.
+  const {data, error} = await sb.rpc('crms_create_user', {p_email: toEmail(d.username), p_password: d.password, p_name: d.name, p_username: d.username});
   if (error) throw new Error('Sign-in account not created: ' + error.message);
-  if (!data.user || (Array.isArray(data.user.identities) && data.user.identities.length === 0)) throw new Error('That username already has a sign-in account. Choose another username.');
-  if (!data.session) toast('Account created, but Supabase "Confirm email" is ON — turn it off so new users can sign in (see README).', 'err');
-  return data.user.id;
+  return String(data);
 }
 async function cloudLoadSample() {
   try { await Cloud.reserveAll({cust: 60, book: 400, agr: 350, inv: 350, pay: 1200}); }
@@ -2349,13 +2347,13 @@ $('#bform').addEventListener('submit', async e => {
   if (pw !== f.elements.p2.value) { msg.textContent = 'The passwords do not match.'; return; }
   const btnEl = f.querySelector('button'); btnEl.disabled = true; msg.textContent = 'Creating administrator…';
   try {
-    let {data, error} = await sb.auth.signUp({email: toEmail(un), password: pw, options: {data: {name, username: un}}});
-    if (error) throw new Error(error.message);
-    if (!data.session) { const r = await sb.auth.signInWithPassword({email: toEmail(un), password: pw}); if (r.error) throw new Error('Account created but sign-in failed (' + r.error.message + '). In Supabase, turn OFF "Confirm email" — see README.'); data = r.data; }
     const roles = DEFAULT_ROLES.map(([n, perms]) => ({id: uid(), name: n, perms: perms.slice()}));
-    const prof = {id: data.user.id, name, username: un, roleId: roles[0].id, active: true, mustChange: false, created: dtLocal(new Date()), lastLogin: null};
-    const r2 = await sb.rpc('crms_bootstrap', {p_roles: roles, p_profile: prof});
-    if (r2.error) { await sb.auth.signOut(); throw new Error('Setup failed: ' + r2.error.message); }
+    const prof = {roleId: roles[0].id, mustChange: false, created: dtLocal(new Date()), lastLogin: null};
+    const r1 = await sb.rpc('crms_setup_admin', {p_email: toEmail(un), p_password: pw, p_name: name, p_username: un, p_roles: roles, p_profile: prof});
+    if (r1.error) throw new Error('Setup failed: ' + r1.error.message);
+    const r = await sb.auth.signInWithPassword({email: toEmail(un), password: pw});
+    if (r.error) throw new Error('Administrator created, but sign-in failed: ' + r.error.message + ' — use the sign-in form.');
+    const data = r.data;
     const sample = f.elements.sample.checked;
     f.hidden = true; $('#lform').hidden = false; f.reset();
     if (!(await startCloudSession(data.user, {quiet: true}))) return;

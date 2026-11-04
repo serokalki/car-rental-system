@@ -7,5 +7,5 @@
 window.CRMS_CONFIG = {
   supabaseUrl: 'https://kznbodwcxcyaxwlfbuih.supabase.co',
   supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt6bmJvZHdjeGN5YXh3bGZidWloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM3MzU4MzksImV4cCI6MjEwOTMxMTgzOX0.IFJYcKCbCJzzpBjKtCHJEAzHSbdmGLj1UlHWLF2E84U',
-  loginDomain: 'example.com'
+  loginDomain: 'saalscarrentals.vu'   // internal only — no email is ever sent; do not change once users exist
 };
